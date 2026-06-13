@@ -1,0 +1,394 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
+ */
+package com.showdomilhao.simuladorcorrida;
+
+/**
+ *
+ * @author gusta
+ */
+public class MainFrame extends javax.swing.JFrame {
+    
+    private Corrida corrida;
+    private final java.util.List<Carro> carros = new java.util.ArrayList<>();
+    private final Campeonato campeonato = new Campeonato();
+    private javax.swing.Timer timerAtualizacao;
+    
+    private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(MainFrame.class.getName());
+    private static final String[] NOMES = {"Vermelho", "Azul", "Verde", "Amarelo"};
+    /**
+     * Creates new form MainFrame
+     */
+    public MainFrame() {
+        initComponents();
+        
+        btnNovaCorrida.setEnabled(false);
+        txtLog.setEditable(false);
+
+        // Cor de cada barra de progresso
+        pbCarro1.setForeground(new java.awt.Color(180, 0, 0));     // Vermelho
+        pbCarro2.setForeground(new java.awt.Color(0, 80, 180));    // Azul
+        pbCarro3.setForeground(new java.awt.Color(30, 130, 30));   // Verde
+        pbCarro4.setForeground(new java.awt.Color(200, 130, 0));   // Amarelo
+
+        timerAtualizacao = new javax.swing.Timer(100, e -> atualizarInterface());
+        
+    }
+    
+    private int getVelocidadeMax() {
+    switch (cmbDificuldade.getSelectedIndex()) {
+        case 0: return 8;   // Fácil  — avanços menores, corrida mais lenta
+        case 1: return 15;  // Médio
+        case 2: return 25;  // Difícil — avanços maiores, corrida rápida
+        default: return 15;
+    }
+}
+
+private void iniciarCorrida() {
+    int meta = (int) spinnerDistancia.getValue();
+    int velMax = getVelocidadeMax();
+
+    // Resetar barras
+    javax.swing.JProgressBar[] barras = {pbCarro1, pbCarro2, pbCarro3, pbCarro4};
+    javax.swing.JLabel[] posLabels   = {lblPos1, lblPos2, lblPos3, lblPos4};
+    for (int i = 0; i < 4; i++) {
+        barras[i].setMaximum(meta);
+        barras[i].setValue(0);
+        barras[i].setString("0m");
+        posLabels[i].setText("0m");
+    }
+
+    lblStatus.setText("Corrida em andamento...");
+    txtLog.setText("");
+
+    corrida = new Corrida(meta, this::adicionarLog);
+    carros.clear();
+
+    for (String nome : NOMES) {
+        Carro c = new Carro(nome, velMax, corrida, this::adicionarLog);
+        carros.add(c);
+        new Thread(c).start();
+    }
+
+    timerAtualizacao.start();
+    btnIniciar.setEnabled(false);
+    btnNovaCorrida.setEnabled(false);
+    cmbDificuldade.setEnabled(false);
+    spinnerDistancia.setEnabled(false);
+    adicionarLog("Corrida iniciada! Meta: " + meta + "m | Dificuldade: " + cmbDificuldade.getSelectedItem());
+}
+
+private void atualizarInterface() {
+    if (corrida == null || carros.isEmpty()) return;
+
+    int meta = corrida.getMeta();
+    javax.swing.JProgressBar[] barras = {pbCarro1, pbCarro2, pbCarro3, pbCarro4};
+    javax.swing.JLabel[] posLabels   = {lblPos1, lblPos2, lblPos3, lblPos4};
+
+    for (int i = 0; i < carros.size(); i++) {
+        int pos = Math.min(carros.get(i).getPosicao(), meta);
+        barras[i].setValue(pos);
+        barras[i].setString(pos + "m");
+        posLabels[i].setText(pos + "m");
+    }
+
+    if (corrida.isEncerrada()) {
+        timerAtualizacao.stop();
+
+        Carro vencedor = corrida.getVencedor();
+        if (vencedor != null) {
+            lblStatus.setText("VENCEDOR: " + vencedor.getNome() + "!");
+            campeonato.registrarVitoria(vencedor.getNome());
+            campeonato.salvarEmArquivo(); // salva ranking.txt
+        }
+
+        lblCampeonato.setText(campeonato.getClassificacao());
+        btnNovaCorrida.setEnabled(true);
+        cmbDificuldade.setEnabled(true);
+        spinnerDistancia.setEnabled(true);
+    }
+}
+
+private void novaCorrida() {
+    for (Carro c : carros) c.parar();
+    carros.clear();
+
+    javax.swing.JProgressBar[] barras = {pbCarro1, pbCarro2, pbCarro3, pbCarro4};
+    javax.swing.JLabel[] posLabels   = {lblPos1, lblPos2, lblPos3, lblPos4};
+    for (int i = 0; i < 4; i++) {
+        barras[i].setValue(0);
+        barras[i].setString("0m");
+        posLabels[i].setText("0m");
+    }
+
+    lblStatus.setText("Pronto para nova corrida");
+    txtLog.setText("");
+    btnIniciar.setEnabled(true);
+    btnNovaCorrida.setEnabled(false);
+}
+
+private void adicionarLog(String msg) {
+    javax.swing.SwingUtilities.invokeLater(() -> {
+        String hora = new java.text.SimpleDateFormat("HH:mm:ss").format(new java.util.Date());
+        txtLog.append("[" + hora + "] " + msg + "\n");
+        txtLog.setCaretPosition(txtLog.getDocument().getLength());
+    });
+}
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        jLabel1 = new javax.swing.JLabel();
+        spinnerDistancia = new javax.swing.JSpinner();
+        jLabel2 = new javax.swing.JLabel();
+        cmbDificuldade = new javax.swing.JComboBox<>();
+        btnIniciar = new javax.swing.JButton();
+        btnNovaCorrida = new javax.swing.JButton();
+        jLabel3 = new javax.swing.JLabel();
+        jLabel4 = new javax.swing.JLabel();
+        jLabel5 = new javax.swing.JLabel();
+        jLabel6 = new javax.swing.JLabel();
+        pbCarro1 = new javax.swing.JProgressBar();
+        pbCarro2 = new javax.swing.JProgressBar();
+        pbCarro3 = new javax.swing.JProgressBar();
+        pbCarro4 = new javax.swing.JProgressBar();
+        lblPos1 = new javax.swing.JLabel();
+        lblPos2 = new javax.swing.JLabel();
+        lblPos3 = new javax.swing.JLabel();
+        lblPos4 = new javax.swing.JLabel();
+        lblStatus = new javax.swing.JLabel();
+        jLabel12 = new javax.swing.JLabel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        txtLog = new javax.swing.JTextArea();
+        lblCampeonato = new javax.swing.JLabel();
+
+        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+
+        jLabel1.setText("Distancia:");
+
+        spinnerDistancia.setModel(new javax.swing.SpinnerNumberModel(200, 100, 1000, 50));
+
+        jLabel2.setText("Dificuldade:");
+
+        cmbDificuldade.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Fácil", "Médio", "Dificil" }));
+
+        btnIniciar.setText("Iniciar Corrida");
+        btnIniciar.addActionListener(this::btnIniciarActionPerformed);
+
+        btnNovaCorrida.setText("Nova Corrida");
+        btnNovaCorrida.addActionListener(this::btnNovaCorridaActionPerformed);
+
+        jLabel3.setText("Vermelho");
+
+        jLabel4.setText("Azul");
+
+        jLabel5.setText("Verde");
+
+        jLabel6.setText("Amarelo");
+
+        pbCarro1.setStringPainted(true);
+
+        pbCarro2.setStringPainted(true);
+
+        pbCarro3.setStringPainted(true);
+
+        pbCarro4.setStringPainted(true);
+
+        lblPos1.setText("0m");
+
+        lblPos2.setText("0m");
+
+        lblPos3.setText("0m");
+
+        lblPos4.setText("0m");
+
+        lblStatus.setText("Pronto para corrida");
+
+        jLabel12.setText("Log de Eventos");
+
+        txtLog.setEditable(false);
+        txtLog.setColumns(20);
+        txtLog.setRows(5);
+        jScrollPane1.setViewportView(txtLog);
+
+        lblCampeonato.setText("Campeonato: sem corridas ainda");
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(30, 30, 30)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(jLabel1)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(spinnerDistancia, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(jLabel2)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cmbDificuldade, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(18, 18, 18)
+                                .addComponent(btnIniciar)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(btnNovaCorrida))
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(jLabel3)
+                                            .addComponent(jLabel4)
+                                            .addComponent(jLabel5))
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                            .addComponent(pbCarro1, javax.swing.GroupLayout.DEFAULT_SIZE, 397, Short.MAX_VALUE)
+                                            .addComponent(pbCarro2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                            .addComponent(pbCarro3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(jLabel6)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                        .addComponent(pbCarro4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(lblPos1)
+                                    .addComponent(lblPos2)
+                                    .addComponent(lblPos3)
+                                    .addComponent(lblPos4)))))
+                    .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(jLabel12)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane1)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(lblStatus)
+                        .addGap(216, 216, 216))))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addGap(0, 0, Short.MAX_VALUE)
+                .addComponent(lblCampeonato)
+                .addGap(178, 178, 178))
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addGap(17, 17, 17)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                    .addComponent(jLabel1)
+                                    .addComponent(spinnerDistancia, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(jLabel2)
+                                    .addComponent(cmbDificuldade, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(btnIniciar)
+                                    .addComponent(btnNovaCorrida))
+                                .addGap(38, 38, 38)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(pbCarro1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                            .addComponent(lblPos1))
+                        .addGap(30, 30, 30)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(pbCarro2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jLabel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addComponent(lblPos2))
+                .addGap(34, 34, 34)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addComponent(pbCarro3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jLabel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(lblPos3))
+                .addGap(39, 39, 39)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addComponent(jLabel6, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(pbCarro4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(lblPos4))
+                .addGap(18, 18, 18)
+                .addComponent(lblStatus)
+                .addGap(18, 18, 18)
+                .addComponent(jLabel12)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 97, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(lblCampeonato)
+                .addContainerGap(30, Short.MAX_VALUE))
+        );
+
+        pack();
+    }// </editor-fold>//GEN-END:initComponents
+
+    private void btnIniciarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnIniciarActionPerformed
+        // TODO add your handling code here:
+        iniciarCorrida();
+    }//GEN-LAST:event_btnIniciarActionPerformed
+
+    private void btnNovaCorridaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNovaCorridaActionPerformed
+        // TODO add your handling code here:
+        novaCorrida();
+    }//GEN-LAST:event_btnNovaCorridaActionPerformed
+
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String args[]) {
+        /* Set the Nimbus look and feel */
+        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
+        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
+         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
+         */
+        try {
+            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+            }
+        } catch (ReflectiveOperationException | javax.swing.UnsupportedLookAndFeelException ex) {
+            logger.log(java.util.logging.Level.SEVERE, null, ex);
+        }
+        //</editor-fold>
+
+        /* Create and display the form */
+        java.awt.EventQueue.invokeLater(() -> new MainFrame().setVisible(true));
+    }
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnIniciar;
+    private javax.swing.JButton btnNovaCorrida;
+    private javax.swing.JComboBox<String> cmbDificuldade;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel12;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel6;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JLabel lblCampeonato;
+    private javax.swing.JLabel lblPos1;
+    private javax.swing.JLabel lblPos2;
+    private javax.swing.JLabel lblPos3;
+    private javax.swing.JLabel lblPos4;
+    private javax.swing.JLabel lblStatus;
+    private javax.swing.JProgressBar pbCarro1;
+    private javax.swing.JProgressBar pbCarro2;
+    private javax.swing.JProgressBar pbCarro3;
+    private javax.swing.JProgressBar pbCarro4;
+    private javax.swing.JSpinner spinnerDistancia;
+    private javax.swing.JTextArea txtLog;
+    // End of variables declaration//GEN-END:variables
+}
